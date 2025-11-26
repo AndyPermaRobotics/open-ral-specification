@@ -489,7 +489,17 @@
                         "null"
                     ],
                     "items": {
-                        "type": "string"
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "The alternative ID value"
+                            },
+                            "issuedBy": {
+                                "type": "string",
+                                "description": "The identification system the alternative ID belongs to"
+                            }
+                        }
                     },
                     "description": "Optional alternative IDs that can be used in other environments"
                 },
