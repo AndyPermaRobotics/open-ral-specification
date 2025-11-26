@@ -1,0 +1,632 @@
+
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$comment": "Definitions that start with '_' (e.g. _Identity) are reusable components shared by both RalObjects and RalMethods. They do not represent valid standalone entities in the context of openRAL.",
+    "title": "openRAL JSON Schema",
+    "description": "This documents defines the schema for RalObjects and RalMethods of the openRAL.",
+    "$defs": {
+        "RalMethod": {
+            "type": "object",
+            "description": "A RalMethod represents a process that can be executed.",
+            "properties": {
+                "identity": {
+                    "$ref": "#/definitions/_Identity"
+                },
+                "definition": {
+                    "$ref": "#/definitions/_Definition"
+                },
+                "template": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/_BaseTemplate"
+                        },
+                        {
+                            "properties": {
+                                "methodStateTemplates": {
+                                    "type": "array",
+                                    "description": "Defines the method state templates. These determine the allowed values for methodState. For example, 'generalMethodState' allows values: undefined, planned, controlRequired, running, cancelled, finished. Multiple templates can be combined, mixing their allowed states.",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "default": [
+                                        "generalMethodState"
+                                    ],
+                                    "minItems": 1
+                                }
+                            },
+                            "required": [
+                                "methodStateTemplates"
+                            ]
+                        }
+                    ]
+                },
+                "executor": {
+                    "type": "object",
+                    "TODO": "Wie ist das Schema des Executors definiert?",
+                    "description": "Contains information about who executes the method"
+                },
+                "inputObjects": {
+                    "type": "array",
+                    "description": "A list of objects that serve as input parameters for the RalMethod. These objects represent a specific state at the time of method creation, rather than a reference to the most current state.",
+                    "items": {
+                        "type": "object",
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/RalObject"
+                            },
+                            {
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "description": "Specifies the role of the input object in the RalMethod, similar to parameter names in programming language functions"
+                                    }
+                                },
+                                "required": [
+                                    "role"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "inputObjectsRef": {
+                    "type": "array",
+                    "description": "A list of references to RalObjects. These references always point to the most current state of the object, unlike inputObjects which represent a specific state for each object.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "role": {
+                                "type": "string",
+                                "description": "Specifies the role of the referenced object in the RalMethod"
+                            },
+                            "UID": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The UUIDv4 of the referenced RalObject"
+                            },
+                            "domain": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "The domain where the RalObject can be found. If not provided, it's assumed to be in the current domain."
+                            }
+                        },
+                        "required": [
+                            "role",
+                            "UID"
+                        ]
+                    },
+                    "uniqueItems": true
+                },
+                "methodState": {
+                    "type": "string",
+                    "enum": [
+                        "undefined",
+                        "planned",
+                        "controlRequired",
+                        "running",
+                        "cancelled",
+                        "finished"
+                    ],
+                    "description": "The current state of the method execution",
+                    "default": "undefined",
+                    "enumDescriptions": {
+                        "undefined": "Undefined method state",
+                        "planned": "The method is planned but not yet executed",
+                        "controlRequired": "An error occurred that should be checked",
+                        "running": "The method is currently being executed",
+                        "cancelled": "The method was cancelled",
+                        "finished": "The method was successfully completed"
+                    }
+                },
+                "nestedMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RalMethod"
+                    },
+                    "description": "A list of nested RalMethods that are executed as part of the parent RalMethod execution"
+                },
+                "outputObjects": {
+                    "type": "array",
+                    "description": "A list of complete RalObjects that are the result of the method execution. These objects were either newly created or modified by the method.",
+                    "items": {
+                        "type": "object",
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/RalObject"
+                            },
+                            {
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "description": "Specifies the role of the output object in the RalMethod result"
+                                    }
+                                },
+                                "required": [
+                                    "role"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "outputObjectsRef": {
+                    "type": "array",
+                    "description": "A list of references to RalObjects that are the result of the method execution. These references point to objects that were either newly created or modified by the method.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "role": {
+                                "type": "string",
+                                "description": "Specifies the role of the referenced output object in the RalMethod result"
+                            },
+                            "UID": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The UUIDv4 of the referenced RalObject"
+                            },
+                            "domain": {
+                                "type": "string",
+                                "description": "The domain where the RalObject can be found. If not provided, it's assumed to be in the same domain as the current object."
+                            }
+                        },
+                        "required": [
+                            "role",
+                            "UID"
+                        ]
+                    }
+                },
+                "specificProperties": {
+                    "$ref": "#/definitions/_SpecificProperties"
+                },
+                "objectConnectors": {
+                    "type": "array",
+                    "description": "Defines how InputObjects or InputObjectsRef are passed to NestedMethods, similar to function calls in programming languages.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "source": {
+                                "type": "string",
+                                "description": "JSON Path referencing an InputObject or InputObjectsRef in the parent RalMethod",
+                                "pattern": "^\\$\\.(inputObjects|inputObjectsRef)\\[\\d+\\]$"
+                            },
+                            "target": {
+                                "type": "string",
+                                "description": "JSON Path referencing an InputObject or InputObjectsRef in a NestedMethod",
+                                "pattern": "^\\$\\.nestedMethods\\[\\d+\\]\\.(inputObjects|inputObjectsRef)\\[\\d+\\]$"
+                            },
+                            "targetRole": {
+                                "type": "string",
+                                "description": "Defines the role the object will have in the NestedMethod"
+                            }
+                        },
+                        "required": [
+                            "source",
+                            "target",
+                            "targetRole"
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "identity",
+                "definition",
+                "template",
+                "inputObjects",
+                "inputObjectsRef",
+                "methodState",
+                "nestedMethods",
+                "outputObjects",
+                "outputObjectsRef",
+                "specificProperties"
+            ]
+        },
+        "RalObject": {
+            "type": "object",
+            "description": "A RalObject is the description of a real or digital object. It contains information about its state, owners, and methods and acts as a digital twin.",
+            "properties": {
+                "identity": {
+                    "$ref": "#/definitions/_Identity"
+                },
+                "definition": {
+                    "$ref": "#/definitions/_Definition"
+                },
+                "template": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/_BaseTemplate"
+                        },
+                        {
+                            "properties": {
+                                "objectStateTemplates": {
+                                    "type": "array",
+                                    "description": "Defines the object state templates. These determine the allowed values for objectState. For example, 'generalObjectState' allows values: undefined, active, inactive. Multiple templates can be combined, mixing their allowed states.",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "default": [
+                                        "generalObjectState"
+                                    ],
+                                    "minItems": 1
+                                }
+                            },
+                            "required": [
+                                "objectStateTemplates"
+                            ]
+                        }
+                    ]
+                },
+                "currentOwners": {
+                    "type": "array",
+                    "description": "List of owners of the object. Each owner can be represented by a UUID or an object with UUID and optional domain.",
+                    "examples": [
+                        "a9b94df2-2ad8-4f2f-b469-3d8bb6f9f054",
+                        {
+                            "uid": "a9b94df2-2ad8-4f2f-b469-3d8bb6f9f054",
+                            "domain": "external-domain.com"
+                        }
+                    ],
+                    "items": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "UUIDv4 of the owner object"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "uid": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "description": "UUIDv4 of the owner object"
+                                    },
+                                    "domain": {
+                                        "type": "string",
+                                        "description": "Domain of the owner object"
+                                    }
+                                },
+                                "required": [
+                                    "uid",
+                                    "domain"
+                                ],
+                                "additionalProperties": false
+                            }
+                        ]
+                    },
+                    "default": []
+                },
+                "objectState": {
+                    "type": "string",
+                    "description": "Current state of the object. Possible values depend on the objectStateTemplates defined in the template.",
+                    "default": "undefined"
+                },
+                "specificProperties": {
+                    "$ref": "#/definitions/_SpecificProperties"
+                },
+                "linkedObjectsRef": {
+                    "type": "array",
+                    "description": "A list of references to RalObjects that are related to this object.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "role": {
+                                "type": "string",
+                                "description": "Descripes the role of the referenced RalObject and the relationship of the referenced object to the current object."
+                            },
+                            "UID": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The UUIDv4 of the referenced RalObject"
+                            },
+                            "domain": {
+                                "type": "string",
+                                "description": "The domain where the RalObject can be found. If not provided, it's assumed to be in the same domain as the current object."
+                            }
+                        },
+                        "required": [
+                            "role",
+                            "UID"
+                        ]
+                    }
+                },
+                "currentGeolocation": {
+                    "type": "object",
+                    "description": "Defines the current location of the object. Can be a physical location or a logical location by referencing a container object.",
+                    "example": {
+                        "container": {
+                            "UID": "..."
+                        },
+                        "geoCoordinates": {
+                            "latitude": 50.0,
+                            "longitude": 10.0
+                        },
+                        "3WordCode": "",
+                        "plusCode": "",
+                        "postalAddress": {
+                            "cityName": "",
+                            "cityNumber": "",
+                            "country": "",
+                            "streetName": "",
+                            "streetNumber": ""
+                        }
+                    },
+                    "properties": {
+                        "container": {
+                            "type": "object",
+                            "description": "The container object that contains the object",
+                            "properties": {
+                                "UID": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "description": "The UUIDv4 of the container object"
+                                },
+                                "domain": {
+                                    "type": "string",
+                                    "description": "The domain where the Container RalObject can be found. If not provided, it's assumed to be in the same domain as the current object."
+                                }
+                            },
+                            "required": [
+                                "UID"
+                            ]
+                        },
+                        "geoCoordinates": {
+                            "type": "object",
+                            "description": "The geo coordinates of the object in latitude and longitude (WGS84)",
+                            "example": {
+                                "latitude": 52.0,
+                                "longitude": 10.0
+                            },
+                            "properties": {
+                                "latitude": {
+                                    "type": "number"
+                                },
+                                "longitude": {
+                                    "type": "number"
+                                }
+                            },
+                            "required": [
+                                "latitude",
+                                "longitude"
+                            ]
+                        },
+                        "3WordCode": {
+                            "type": "string",
+                            "description": "A 3-word code for geographic positions is a system that divides the entire world into a grid of 3m x 3m squares, with each square assigned a unique combination of three words.",
+                            "example": "///filled.count.soap"
+                        },
+                        "plusCode": {
+                            "type": "string",
+                            "description": "Open Location Codes from Google. Similar to 3WordCode. Can have different lengths for different precision",
+                            "example": "V75V+8Q"
+                        },
+                        "postalAddress": {
+                            "type": "object",
+                            "description": "The postal address of the object",
+                            "properties": {
+                                "cityName": {
+                                    "type": "string"
+                                },
+                                "cityNumber": {
+                                    "type": "string",
+                                    "description": "The number of the city. Often a zip code"
+                                },
+                                "country": {
+                                    "type": "string"
+                                },
+                                "streetName": {
+                                    "type": "string"
+                                },
+                                "streetNumber": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "methodHistoryRef": {
+                    "type": "array",
+                    "description": "References RalMethods that were executed on this object or will be executed in the future. The object could be an inputObject or an outputObject of the method.",
+                    "default": [],
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "UID": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The UUIDv4 of the RalMethod"
+                            },
+                            "RALType": {
+                                "type": "string",
+                                "description": "The RalType of the RalMethod"
+                            },
+                            "methodState": {
+                                "type": "string",
+                                "description": "The current state of the RalMethod"
+                            },
+                            "executor": {
+                                "type": "object",
+                                "description": "The executor of the RalMethod. If only the RALType is given, any executor that inherits from this RALType can execute the ",
+                                "properties": {
+                                    "UID": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "description": "The UUIDv4 of the executor"
+                                    },
+                                    "RALType": {
+                                        "type": "string",
+                                        "description": "The RalType of the executor"
+                                    }
+                                },
+                                "required": [
+                                    "RALType"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "UID", "RALType"
+                        ]
+                    }
+                },
+                "existenceStarts": {
+                    "type": "string",
+                    "description": "Defines the time the real object that is represented by the RalObject started to exist",
+                    "format": "date-time"
+                }
+            }
+        },
+        "_Identity": {
+            "type": "object",
+            "description": "Defines the identity of an entity",
+            "properties": {
+                "UID": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "A UUIDv4 that globally uniquely identifies the entire object"
+                },
+                "alternateIDs": {
+                    "type": [
+                        "array",
+                        "null"
+                    ],
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Optional alternative IDs that can be used in other environments"
+                },
+                "alternateNames": {
+                    "type": [
+                        "array",
+                        "null"
+                    ],
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Optional alternative names that can be used in other environments"
+                },
+                "name": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Optional name for easier human identification, not necessarily globally unique"
+                },
+                "siteTag": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Also known as 'domain', indicates the environment where the object is stored"
+                }
+            },
+            "required": [
+                "UID"
+            ]
+        },
+        "_Definition": {
+            "type": "object",
+            "description": "Provides a general textual description of the RalType for the entity (RalMethod or RalObject). The description can be either directly in the definitionText or referenced via a URL in definitionURL. The description provides a general description the template/RalType and NOT the specific entity ",
+            "examples": [
+                "A farm is an agricultural entity engaged in crop cultivation and/or animal husbandry for the production of food and other products."
+            ],
+            "properties": {
+                "definitionText": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "General textual description of the RalType"
+                },
+                "definitionURL": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "uri",
+                    "description": "URL referencing the general description of the RALTyp"
+                }
+            },
+            "anyOf": [
+                {
+                    "required": [
+                        "definitionText"
+                    ]
+                },
+                {
+                    "required": [
+                        "definitionURL"
+                    ]
+                }
+            ]
+        },
+        "_BaseTemplate": {
+            "type": "object",
+            "description": "Defines the structure of a specific entity instance, similar but more restrictive than a JSON schema. All entites must have a template.",
+            "properties": {
+                "RALType": {
+                    "type": "string",
+                    "description": "The unique name of the template for the entity. RALTypes can be found at https://open-ral.io. The RALType is the name for a template that describes the structure of a specific entity of this RALType. It's comparable to classes in object-oriented programming, where RalObjects are instances of these classes. The RALType would be the name of the class."
+                },
+                "version": {
+                    "type": [
+                        "string"
+                    ],
+                    "description": "Optional field indicating the version of the RalType and its underlying template"
+                }
+            },
+            "required": [
+                "RALType",
+                "version"
+            ]
+        },
+        "_SpecificProperties": {
+            "type": "array",
+            "description": "Special properties of the RalMethod, such as configuration values. Each key must be unique.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "Unique identifier for the specific property"
+                    },
+                    "value": {
+                        "description": "Value of the specific property. The type is defined by the unit."
+                    },
+                    "unit": {
+                        "type": "string",
+                        "description": "Unit of the value, should be a predefined unit from the unitExamples, but can be a custom one if needed.",
+                        "unitExamples": {
+                            "String": "string without further restrictions",
+                            "integer": "integer number",
+                            "number": "number, can be integer or float",
+                            "boolean": "boolean true or false",
+                            "regex": "a regex pattern",
+                            "iso8601": "date or duration in ISO 8601 format",
+                            "cronTab": "e.g. '*/5 * * * *'",
+                            "json": "a json object",
+                            "JSONString": "a string containing a json object",
+                            "C": "degree in celsius - unit of temperature",
+                            "V": "volt - unit of electric potential difference",
+                            "A": "ampere - unit of electric current",
+                            "dBm": "decibel-milliwatt - unit of power e.g. for signal strength",
+                            "m": "meter - unit of length",
+                            "s": "second - unit of time",
+                            "kg": "kilogram - unit of mass"
+                        }
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional description explaining the meaning or purpose of the specific property"
+                    }
+                },
+                "required": [
+                    "key",
+                    "value",
+                    "unit"
+                ]
+            },
+            "uniqueProperties": [
+                "key"
+            ]
+        }
+    }
+}
