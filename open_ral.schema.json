@@ -255,46 +255,6 @@
                         }
                     ]
                 },
-                "currentOwners": {
-                    "type": "array",
-                    "description": "List of owners of the object. Each owner can be represented by a UUID or an object with UUID and optional domain.",
-                    "examples": [
-                        "a9b94df2-2ad8-4f2f-b469-3d8bb6f9f054",
-                        {
-                            "uid": "a9b94df2-2ad8-4f2f-b469-3d8bb6f9f054",
-                            "domain": "external-domain.com"
-                        }
-                    ],
-                    "items": {
-                        "oneOf": [
-                            {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "UUIDv4 of the owner object"
-                            },
-                            {
-                                "type": "object",
-                                "properties": {
-                                    "uid": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "description": "UUIDv4 of the owner object"
-                                    },
-                                    "domain": {
-                                        "type": "string",
-                                        "description": "Domain of the owner object"
-                                    }
-                                },
-                                "required": [
-                                    "uid",
-                                    "domain"
-                                ],
-                                "additionalProperties": false
-                            }
-                        ]
-                    },
-                    "default": []
-                },
                 "objectState": {
                     "type": "string",
                     "description": "Current state of the object. Possible values depend on the objectStateTemplates defined in the template.",
@@ -305,13 +265,13 @@
                 },
                 "linkedObjectsRef": {
                     "type": "array",
-                    "description": "A list of references to RalObjects that are related to this object.",
+                    "description": "A list of references to RalObjects that are related to this object. The role 'owner' is reserved for ownership relationships.",
                     "items": {
                         "type": "object",
                         "properties": {
                             "role": {
                                 "type": "string",
-                                "description": "Descripes the role of the referenced RalObject and the relationship of the referenced object to the current object."
+                                "description": "Describes the role of the referenced RalObject and the relationship of the referenced object to the current object. The role 'owner' is reserved for ownership relationships."
                             },
                             "UID": {
                                 "type": "string",

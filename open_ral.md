@@ -47,13 +47,13 @@ Here is an example of a `RalObject` of the `ralType` "field", which represents a
       "streetNumber": "unknown"
     }
   },
-  "currentOwners": [
+  "existenceStarts": "2025-11-26T15:29:13.088Z",
+  "linkedObjectsRef": [
     {
+      "role": "owner",
       "UID": "08ff32b5-f77b-47d6-9f27-30aed9f12f00"
     }
   ],
-  "existenceStarts": "2025-11-26T15:29:13.088Z",
-  "linkedObjectRef": [],
   "methodHistoryRef": [],
   "objectState": "undefined",
   "specificProperties": [
@@ -159,31 +159,26 @@ The currentGeolocation section describes the physical location of the object:
 - `3WordCode`: A what3words address for precise location identification
 - `plusCode`: A Google Plus Code for location identification
 
-## currentOwners
-```json
-"currentOwners": [
-    {
-      "UID": "08ff32b5-f77b-47d6-9f27-30aed9f12f00"
-    }
-]
-```
-The currentOwners section lists all current owners of the object:
-- An array of references to RalObjects (typically of type "person" or "organization") that own this object
-- Each owner is referenced by their unique UID
-
 ## existenceStarts
 ```json
 "existenceStarts": "2025-11-26T15:29:13.088Z"
 ```
 The existenceStarts field contains an ISO 8601 timestamp (UTC) indicating when this object was created or when it started to exist in the system.
 
-## linkedObjectRef
+## linkedObjectsRef
 ```json
-"linkedObjectRef": []
+"linkedObjectsRef": [
+    {
+      "role": "owner",
+      "UID": "08ff32b5-f77b-47d6-9f27-30aed9f12f00"
+    }
+]
 ```
-The linkedObjectRef section contains references to other RalObjects that are logically related to this object:
-- An array of UIDs referencing related objects (e.g., equipment assigned to this field, crops planted on it, or related parcels)
-- This enables creating a network of interconnected objects
+The linkedObjectsRef section contains references to other RalObjects that are logically related to this object:
+- An array of object references, each with a `role`, `UID`, and optional `domain` field
+- Each reference describes the relationship through its `role` field (e.g., "owner", "operator", "assigned_equipment", "related_crop")
+- The role `"owner"` is reserved for ownership relationships and should be used to reference RalObjects (typically of type "person" or "organization") that own this object
+- This enables creating a network of interconnected objects with clearly defined relationships
 
 ## methodHistoryRef
 ```json
