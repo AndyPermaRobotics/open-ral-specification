@@ -6,7 +6,7 @@ For example, it precisely defines how objects relate to each other (`linkedObjec
 
 The formal specification of these language constructs is defined and described in the `open_ral.schema.json` file.
 
-A key concept is the `ralType`, which enables the definition of reusable "classes" or "templates" for the same things and processes across organizations. The `ralType` describes what something is and how it is structured, including which `specificProperties` exist for this particular type of object or method.
+A key concept is the `ralType`, which enables the definition of reusable "classes" or "templates" for the same things and processes across organizations. The `ralType` describes what something is and how it is structured, including which `specificProperties` exist for this particular type of object or method. Using official ralTypes from the open-ral.io registry ensures cross-organizational interoperability and standardized data exchange.
 
 ## RalObject Example
 
@@ -116,7 +116,7 @@ The identity section contains all identifiers and names for the object:
 }
 ```
 The template section defines the type and structure of the object:
-- `RALType`: Defines the type of the object (in this case "field"). It refers to the official RALTypes available at https://open-ral.io/
+- `RALType`: Defines the type of the object (in this case "field"). It should be selected from the official RALTypes available at https://open-ral.io/ to ensure interoperability across systems and organizations. Use the semantic search API endpoint (`/semantic_search`) to discover appropriate official templates by describing your concept in natural language. For guidance on custom ralTypes when no official template matches your needs, see the "Official vs. Custom RALTypes" section below.
 - `objectStateTemplates`: Specifies which values the objectState field can have. In this case, it uses the "generalObjectState" template that defines common states for general objects. TODO: link to state template definitions
 - `version`: The version number of the RALType specification being used
 
@@ -230,5 +230,100 @@ The specificProperties section contains RALType-specific properties:
   - `soil type`: Classification of the soil type
   - `soil value`: A soil quality rating (using the German soil value system in this example)
 - These properties allow each RALType to have domain-specific attributes while maintaining a consistent overall structure
+
+## Official vs. Custom RALTypes
+
+### Official RALTypes
+
+Official ralTypes are registered and maintained in the open-ral.io registry. Using official ralTypes provides several critical benefits:
+
+- **Interoperability**: Data can be seamlessly exchanged between different organizations, systems, and software tools without custom integration work
+- **Standardization**: Common understanding of what a ralType represents and which properties it contains
+- **Semantic Clarity**: Well-documented definitions that AI systems and humans can rely on
+- **Version Management**: Controlled evolution of templates with proper versioning
+- **Community Support**: Shared maintenance and improvement by the openRAL community
+
+**Finding Official RALTypes**: Use the semantic search API to discover appropriate official templates:
+
+```bash
+POST https://europe-west3-ral1-80620.cloudfunctions.net/semantic_search?query=your+concept+description
+Headers:
+  X-API-KEY: your-api-key
+```
+
+The API returns matching templates with relevance scores, allowing you to find the best fit for your use case even if you don't know the exact ralType name.
+
+### Custom RALTypes
+
+While official ralTypes should be used whenever possible, there are legitimate cases where custom ralTypes are necessary:
+
+- The concept you need to represent doesn't exist in the official registry yet
+- Your organization has highly specialized domain-specific objects or methods
+- You're prototyping new concepts before proposing them for standardization
+
+**Important Trade-offs**: Custom ralTypes come with significant limitations:
+
+- ❌ **No Interoperability**: Other organizations cannot automatically interpret your custom ralType without additional documentation and integration work
+- ❌ **Limited AI Understanding**: AI systems trained on openRAL won't understand your custom properties and semantics
+- ❌ **Maintenance Burden**: You're responsible for documenting, versioning, and maintaining the custom ralType
+- ⚠️ **Name Conflicts**: Risk of conflicts if the official registry later introduces a ralType with the same name
+
+### Custom RALType Naming Convention
+
+To avoid conflicts and enable future integration, custom ralTypes MUST follow reverse-domain notation:
+
+```
+com.organization.domain.typeName
+```
+
+**Examples**:
+- `com.acmefarms.equipment.autonomousTractor`
+- `org.researchlab.sensors.hyperspectralCamera`
+- `de.bioland.certification.organicField`
+
+**Naming Rules**:
+1. Start with your organization's reverse domain (e.g., `com.yourcompany`)
+2. Optionally add subdomain/category (e.g., `.equipment`, `.methods`)
+3. End with a descriptive camelCase type name
+4. Use only alphanumeric characters, dots, and camelCase (no spaces, underscores, or special characters)
+5. Keep names concise but descriptive
+
+### Documentation Requirements for Custom RALTypes
+
+If you create custom ralTypes, you MUST maintain comprehensive documentation:
+
+1. **Definition**: Detailed `definitionText` explaining what the ralType represents
+2. **Specific Properties**: Complete specification of all `specificProperties` including:
+   - Property name and description
+   - Data type and unit
+   - Valid value ranges or constraints
+   - Required vs. optional properties
+3. **Version History**: Track changes to your custom ralType structure
+4. **Use Cases**: Examples of when and how the ralType should be used
+5. **Related Types**: Document relationships to official or other custom ralTypes
+
+### Contributing Custom RALTypes to the Official Registry
+
+If you've created a custom ralType that could benefit the broader openRAL community, consider proposing it for inclusion in the official registry:
+
+**Contribution Process**:
+1. **Validate Need**: Ensure no existing official ralType covers your use case (use semantic search)
+2. **Document Thoroughly**: Prepare complete documentation as outlined above
+3. **Gather Support**: If possible, show adoption by multiple organizations or use cases
+4. **Submit Proposal**: Contact the openRAL maintainers via info@open-ral.io with:
+   - Your custom ralType specification
+   - Use case descriptions
+   - Example instances
+   - Rationale for standardization
+5. **Community Review**: The proposal will be reviewed by the openRAL community for clarity, necessity, and potential conflicts
+6. **Standardization**: If accepted, your custom ralType will be integrated into the official registry with proper attribution
+
+**Migration Path**: When a custom ralType becomes official:
+- The official ralType may receive a simplified name (e.g., `com.acmefarms.equipment.autonomousTractor` → `autonomousTractor`)
+- You should migrate your instances to use the official ralType
+- The custom ralType should be marked as deprecated in your documentation
+- A transition period allows gradual migration across your systems
+
+**Best Practice**: Even when using custom ralTypes, design them as if they might become official standards - use clear naming, comprehensive documentation, and follow the same structural patterns as official ralTypes.
 
 

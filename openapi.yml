@@ -99,7 +99,7 @@ components:
       properties:
         name:
           type: string
-          description: name of the template respectivly the ralType of corresponding objects or methods 
+          description: Name of the official template registered at open-ral.io, used as the ralType for corresponding objects or methods. All returned templates are from the official openRAL registry.
           example: "TemperatureSensor"
         roles:
           type: array

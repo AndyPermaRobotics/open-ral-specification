@@ -11,3 +11,16 @@ This is the formal specification of openRAL, a lightweight and open language for
 
 Use `python create_single_document.py` to create a single Markdown document that contains all relevant informations about openRAL.
 This can be used to give an AI model the full context about openRAL in one file.
+
+## Contributing
+
+### Proposing New RALTypes
+
+If you've developed a custom ralType that could benefit the broader openRAL community, you can propose it for inclusion in the official registry at https://open-ral.io.
+
+**To submit a proposal**:
+- Email info@open-ral.io with your ralType specification, documentation, and use cases
+- See the "Official vs. Custom RALTypes" section in `open_ral.md` for detailed contribution guidelines
+- Include examples of the ralType in use and rationale for standardization
+
+Contributed ralTypes that are accepted will become part of the official standard, enabling cross-organizational interoperability for your use case.

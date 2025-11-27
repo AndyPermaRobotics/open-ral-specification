@@ -534,7 +534,7 @@
             "properties": {
                 "RALType": {
                     "type": "string",
-                    "description": "The unique name of the template for the entity. RALTypes can be found at https://open-ral.io. The RALType is the name for a template that describes the structure of a specific entity of this RALType. It's comparable to classes in object-oriented programming, where RalObjects are instances of these classes. The RALType would be the name of the class."
+                    "description": "The unique name of the template for the entity. RALTypes should be selected from the official registry at https://open-ral.io to ensure cross-organizational interoperability. Use the semantic search API endpoint (/semantic_search) to discover appropriate official templates. Custom ralTypes are possible but must follow reverse-domain notation (e.g., com.organization.typeName) and come with interoperability trade-offs. See the 'Official vs. Custom RALTypes' section in the documentation for detailed guidance. The RALType is comparable to classes in object-oriented programming, where RalObjects are instances of these classes."
                 },
                 "version": {
                     "type": [
