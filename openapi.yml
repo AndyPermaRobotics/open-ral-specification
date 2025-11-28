@@ -16,8 +16,13 @@ paths:
     post:
       summary: Perform semantic search on RAL templates
       description: > 
-        Search for RAL templates using semantic similarity.
-        E.g. you are searching for the openRAL repesentation of a "field" in an agricultural context. You can describe the concept in natural language, and the API will return the best matching openRAL Templates that may represent that concept.
+        Use this endpoint to find the appropriate official RALType when you don't know which template fits your use case.
+        
+        Describe your concept in natural language, and the API will return matching RAL templates ranked by semantic similarity.
+        For example, searching for "a specific area of land designated for the cultivation of crops" will find templates like "field", "plot", or "farmland".
+        
+        Note: If you already know the exact RALType name, you can use it directly without searching.
+        
         Attention: Semantic similarity does not guarantee semantic equivalence, but rather finds templates that are contextually relevant based on the input description.
       parameters:
         - name: query
