@@ -104,7 +104,7 @@ def main() -> None:
         "openapi.yml",
     ]
 
-    output_file = "open_ral_overview.md"
+    output_file = "open_ral_bundle.md"
 
     # Get the script's directory as base path
     base_path = Path(__file__).parent
