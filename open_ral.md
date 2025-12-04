@@ -811,3 +811,246 @@ Here is an example of a `RalMethod` of the `ralType` "changeContainer", which re
   ]
 }
 ```
+
+Breaking down the example:
+
+## identity
+```json
+"identity": {
+    "alternateIDs": [],
+    "alternateNames": [],
+    "UID": "02333a62-7b35-4f98-9e1f-a9cbf56dcd48",
+    "name": "",
+    "siteTag": ""
+}
+```
+The identity section contains all identifiers and names for the method:
+- `UID`: A unique identifier (UUIDv4) that globally identifies this specific method instance
+- `alternateIDs`: An array of alternative IDs issued by other systems. Each alternate ID contains:
+  - `id`: The alternative identifier string
+  - `issuedBy`: The system or authority that issued this alternate ID
+- `alternateNames`: An array of alternative names used for this method
+- `name`: The primary human-readable name of the method. This is not unique and can be changed
+- `siteTag`: A location-specific tag or identifier used on-site
+
+## template
+```json
+"template": {
+    "RALType": "changeContainer",
+    "version": "1",
+    "methodStateTemplates": "generalMethodState"
+}
+```
+The template section defines the type and structure of the method:
+- `RALType`: Defines the type of the method (in this case "changeContainer"). It should be selected from the official RALTypes available at https://open-ral.io/ to ensure interoperability across systems and organizations. Use the semantic search API endpoint (`/semantic_search`) to discover appropriate official templates by describing your concept in natural language. For guidance on custom ralTypes when no official template matches your needs, see the "Official vs. Custom RALTypes" section above
+- `methodStateTemplates`: Specifies which values the methodState field can have. In this case, it uses the "generalMethodState" template that defines common states for methods: undefined, planned, controlRequired, running, cancelled, finished. Multiple templates can be combined to mix their allowed states
+- `version`: The version number of the RALType specification being used
+
+## definition
+```json
+"definition": {
+    "definitionText": "A Method to change the container of an object",
+    "definitionURL": ""
+}
+```
+The definition section provides semantic information about what this RALType of method represents:
+- `definitionText`: A comprehensive free-text description of what this method type means and how it is used in its domain context
+- `definitionURL`: A URL reference to external documentation or standards that further define this method type
+
+## existenceStarts
+```json
+"existenceStarts": "2025-02-23T17:40:22"
+```
+The existenceStarts field contains an ISO 8601 timestamp (UTC) indicating when this method was created or when it started to exist in the system.
+
+## executor
+```json
+"executor": {
+    "identity": {
+      "UID": "8bIquGNww2cChmaWEgdlpX0tgzv1",
+      ...
+    },
+    "template": {
+      "RALType": "human",
+      ...
+    },
+    ...
+}
+```
+The executor section contains a complete RalObject representing the entity (person, machine, or organization) that executes or executed this method:
+- This is a full RalObject, not just a reference, providing complete information about the executor
+- In this example, the executor is a RalObject of type "human"
+- The executor can be any RalObject type that is capable of performing the method (e.g., "human", "robot", "machine", "software_agent")
+
+## inputObjects
+```json
+"inputObjects": [
+    {
+      "identity": {
+        "UID": "2a9c7dec-0f4d-448f-befb-c305364f960a",
+        ...
+      },
+      "template": {
+        "RALType": "coffee",
+        ...
+      },
+      "role": "item",
+      ...
+    },
+    ...
+]
+```
+The inputObjects section contains complete RalObjects that serve as input parameters for the method:
+- An array of full RalObject instances, each with an additional `role` field
+- These objects represent a specific state at the time of method creation (a snapshot), rather than a reference to the most current state
+- The `role` field specifies the role of each input object in the method, similar to parameter names in programming functions (e.g., "item", "oldContainer", "newContainer")
+- This creates an immutable record of what the input objects looked like when the method was executed
+
+## inputObjectsRef
+```json
+"inputObjectsRef": []
+```
+The inputObjectsRef section contains references to RalObjects that serve as input parameters:
+- An array of object references, each with a `role`, `UID`, and optional `domain` field
+- Unlike `inputObjects`, these references always point to the most current state of the object
+- This is useful when you need to reference objects without embedding their complete state
+- Can be empty if all inputs are provided as complete objects in `inputObjects`
+
+## outputObjects
+```json
+"outputObjects": [
+    {
+      "identity": {
+        "UID": "2a9c7dec-0f4d-448f-befb-c305364f960a",
+        ...
+      },
+      "currentGeolocation": {
+        "container": {
+          "UID": "00d25f49-801d-4a5f-8cf9-a20750f2eae3"
+        },
+        ...
+      },
+      "methodHistoryRef": [
+        ...,
+        {
+          "UID": "02333a62-7b35-4f98-9e1f-a9cbf56dcd48",
+          "RALType": "changeContainer"
+        }
+      ],
+      "role": "item",
+      ...
+    }
+]
+```
+The outputObjects section contains complete RalObjects that are the result of the method execution:
+- An array of full RalObject instances, each with an additional `role` field
+- These objects were either newly created or modified by the method
+- The `role` field specifies the role of each output object in the method result
+- Notice how the output object's state differs from the input object (e.g., updated container, added method to history)
+- This creates a complete record of the method's effects on objects
+
+## outputObjectsRef
+```json
+"outputObjectsRef": []
+```
+The outputObjectsRef section contains references to RalObjects that are the result of the method execution:
+- An array of object references, each with a `role`, `UID`, and optional `domain` field
+- These references point to objects that were either newly created or modified by the method
+- Can be empty if all outputs are provided as complete objects in `outputObjects`
+
+## methodState
+```json
+"methodState": "finished"
+```
+The methodState field indicates the current state of the method execution:
+- The possible states are defined by the `methodStateTemplates` specified in the template section
+- Common states for "generalMethodState" include:
+  - `undefined`: Undefined method state
+  - `planned`: The method is planned but not yet executed
+  - `controlRequired`: An error occurred that should be checked
+  - `running`: The method is currently being executed
+  - `cancelled`: The method was cancelled
+  - `finished`: The method was successfully completed
+
+## duration
+```json
+"duration": null
+```
+The duration field contains the duration of the method execution:
+- Can be an ISO 8601 duration string (e.g., "PT1H30M" for 1 hour 30 minutes)
+- Can be `null` if the duration is not tracked or not yet determined
+- Useful for tracking how long a process took to complete
+
+## nestedMethods
+```json
+"nestedMethods": []
+```
+The nestedMethods section contains nested RalMethods that are executed as part of this method:
+- An array of complete RalMethod instances
+- Allows for hierarchical composition of methods, similar to function calls in programming
+- Nested methods can have their own inputs, outputs, and nested methods
+- Can be used with `objectConnectors` to define how inputs are passed to nested methods
+- Empty in this example, but would contain full RalMethod objects when used
+
+## specificProperties
+```json
+"specificProperties": []
+```
+The specificProperties section contains RALType-specific properties:
+- An array of property objects, each with a `key`, `value`, `unit`, and optional `description`
+- The properties are defined by the RALType specification
+- These properties provide method-specific configuration or parameters
+- For example, a "fertilizing" method might have properties like:
+  - `fertilizer_type`: The type of fertilizer used
+  - `amount`: The amount applied
+  - `application_rate`: The rate of application
+- Empty in this example as the "changeContainer" method doesn't require additional properties
+
+## digitalSignatures
+```json
+"digitalSignatures": [
+    {
+      "signature": "FAqAFaeV1M7ke7CT8gkPwY2ReujW6b5W9Wd7aekqWarNnX2BUyDLsLSjT55fOfEZEScwS0+3auZUgKXFv2zrCg==",
+      "signerUID": "8bIquGNww2cChmaWEgdlpX0tgzv1",
+      "signedContent": [
+        "$"
+      ],
+      "algorithm": "Ed25519"
+    }
+]
+```
+The digitalSignatures section contains cryptographic signatures that verify the authenticity and integrity of the method:
+- An optional array of signature objects that can be used to prove who created or approved the method
+- Each signature contains:
+  - `signature`: A Base64-encoded digital signature string
+  - `signerUID`: The UID of the signer (references a RalObject, typically of type "human" or "organization")
+  - `signedContent`: An array of JSON Path expressions specifying which parts of the method were signed
+    - `"$"` means the entire method (root) was signed
+    - More specific paths like `"$.inputObjects[0]"` or `"$.methodState"` can sign specific parts
+    - Multiple paths can be included to sign different parts separately
+  - `algorithm`: (Optional) The cryptographic algorithm used for signing. Defaults to "Ed25519" if not specified. Supported algorithms include:
+    - `Ed25519`: Elliptic curve signature scheme (default, recommended for new implementations)
+    - `RSA-SHA256`: RSA with SHA-256 hashing
+    - `ECDSA-P256-SHA256`: Elliptic Curve Digital Signature Algorithm with P-256 curve and SHA-256
+
+**Multiple Signatures**: The array structure allows multiple parties to sign the same method, each potentially using different algorithms. This is useful for:
+- Multi-party approval processes (e.g., farmer and inspector both sign a harvest method)
+- Regulatory compliance (e.g., organic certification requires signatures from farmer and certifier)
+- Audit trails (e.g., different stakeholders sign at different stages of a process)
+
+**Public Key Lookup**: The `signerUID` references a RalObject that should contain the public key information needed to verify the signature. The public key is typically stored in the `specificProperties` of the referenced RalObject.
+
+**Signature Verification Process**:
+1. Retrieve the public key from the RalObject referenced by `signerUID`
+2. Extract the content specified by the `signedContent` JSON Path expressions
+3. Canonicalize the JSON content (remove whitespace, sort keys) to ensure consistent hashing
+4. Verify the signature using the public key and the specified algorithm
+5. If verification succeeds, the authenticity and integrity of the signed content is confirmed
+
+**Usage Examples**:
+- **Regulatory Compliance**: A farmer signs a harvest method to certify when and how crops were harvested
+- **Traceability**: Multiple stakeholders sign methods at different stages of a supply chain
+- **Audit Trail**: Methods are signed to create tamper-evident records of agricultural operations
+- **Authorization**: Digital signatures prove that a method was approved by authorized personnel
+
+**Note**: The `digitalSignatures` field is optional. Methods without signatures are still valid but lack cryptographic proof of authenticity. RalObjects can also include digital signatures using the same structure.

@@ -1,143 +1,348 @@
 openapi: 3.0.3
 info:
-  title: openRAL Semantic Search API
-  description: API for semantic search of RAL templates
+  title: openRAL Cloud Functions API
+  description: |
+    
+    This API provides access to RAL templates, allowing authenticated clients to:
+    - Retrieve specific templates by name
+    - Submit requests for new templates
+    - Monitor API health status
+    
+    **Authentication**: Most endpoints require an API key. The API key can be provided as x-api-key header.
   version: 1.0.0
-  
+  contact:
+    name: Permarobotics Team
+    email: team@permarobotics.com
+
 servers:
   - url: https://europe-west3-ral1-80620.cloudfunctions.net
-    description: Production server
+    description: Production API server
+
+tags:
+  - name: Health
+    description: Service health check endpoints
+  - name: Templates
+    description: RAL template retrieval endpoints
+  - name: Requests
+    description: Template request management endpoints
 
 security:
   - ApiKeyAuth: []
 
 paths:
-  /semantic_search:
-    post:
-      summary: Perform semantic search on RAL templates
-      description: > 
-        Use this endpoint to find the appropriate official RALType when you don't know which template fits your use case.
-        
-        Describe your concept in natural language, and the API will return matching RAL templates ranked by semantic similarity.
-        For example, searching for "a specific area of land designated for the cultivation of crops" will find templates like "field", "plot", or "farmland".
-        
-        Note: If you already know the exact RALType name, you can use it directly without searching.
-        
-        Attention: Semantic similarity does not guarantee semantic equivalence, but rather finds templates that are contextually relevant based on the input description.
-      parameters:
-        - name: query
-          in: query
-          required: true
-          description: Search text for finding templates that match the semantic meaning of the input
-          schema:
-            type: string
-            example: "a specific area of land designated for the cultivation of crops"
-        - name: templateTypes
-          in: query
-          required: false
-          description: Filter by template types (currently not implemented)
-          schema:
-            type: array
-            items:
-              type: string
-              enum: ["object", "method"]
-              example: "object"
+  /checkHealth:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: |
+        Verifies that the API service is running and accessible. Returns HTTP 200 if the service is operational.
+        This endpoint accepts all HTTP methods and requires no authentication.
+      operationId: checkHealth
+      security: []
       responses:
         '200':
-          description: Successful search results
+          description: Service is healthy and operational
+    post:
+      tags:
+        - Health
+      summary: Health check endpoint (POST)
+      description: Verifies service availability via POST method
+      operationId: checkHealthPost
+      security: []
+      responses:
+        '200':
+          description: Service is healthy and operational
+    put:
+      tags:
+        - Health
+      summary: Health check endpoint (PUT)
+      description: Verifies service availability via PUT method
+      operationId: checkHealthPut
+      security: []
+      responses:
+        '200':
+          description: Service is healthy and operational
+    delete:
+      tags:
+        - Health
+      summary: Health check endpoint (DELETE)
+      description: Verifies service availability via DELETE method
+      operationId: checkHealthDelete
+      security: []
+      responses:
+        '200':
+          description: Service is healthy and operational
+
+  /getTemplate:
+    get:
+      tags:
+        - Templates
+      summary: Retrieve a RAL template by name
+      description: |
+        Retrieves a RAL template in the requested format (JSON or XML).
+        
+        Returns the latest version of the template. If no format is specified, JSON is returned by default.
+        
+        **Authentication**: Requires a valid API key provided via the `x-api-key` header.
+        
+        **Future Work**: Version selection via `version` parameter is planned for future implementation.
+      operationId: getTemplate
+      parameters:
+        - name: templateName
+          in: query
+          required: true
+          description: The name of the template to retrieve
+          schema:
+            type: string
+          example: "human"
+        - name: returnFormat
+          in: query
+          required: false
+          description: The format in which to return the template. Defaults to JSON if not specified.
+          schema:
+            type: string
+            enum: [JSON, XML]
+            default: JSON
+          example: "JSON"
+      responses:
+        '200':
+          description: Template retrieved successfully
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SearchResult'
-                  example:
-                    name: "field"
-                    roles: ["thing"]
-                    templateId: "flxES9jiumQvMUCze8tE"
-                    templateType: "object"
-                    relevance: 562
-                    definitionText: "In an agricultural context, a 'field' refers to a specific area of land designated for the cultivation of crops or the grazing of livestock. Fields are typically delineated by natural boundaries like hedgerows, fences, or other markers, and they are managed by farmers to optimize the production of agricultural products. The size, shape, and use of a field can vary widely depending on the type of farming, the landscape, and the agricultural practices employed. Fields are fundamental units in farming operations, and they may be used for growing a single crop (monoculture) or multiple crops (polyculture), or for rotational grazing in the case of livestock farming. Soil preparation, irrigation, planting, and harvesting are all activities that take place within these fields."
+                type: object
+                description: The template data in JSON format
+              examples:
+                humanTemplate:
+                  summary: Human Template Example
+                  value:
+                    identity:
+                      UID: "human_001"
+                      name: "Human Template"
+                      siteTag: "example-site"
+                    template:
+                      RALType: "human"
+                      version: "1"
+            application/xml:
+              schema:
+                type: string
+                description: The template data in XML format
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <template>
+                  <identity>
+                    <UID>human_001</UID>
+                    <name>Human Template</name>
+                    <siteTag>example-site</siteTag>
+                  </identity>
+                  <template>
+                    <RALType>human</RALType>
+                    <version>1</version>
+                  </template>
+                </template>
         '400':
-          description: Bad request - invalid parameters
+          description: Bad request - missing or invalid parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized - missing API key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingApiKey:
+                  summary: Missing API Key
+                  value:
+                    type: "MissingAuthentication"
+                    details: "API key is required. Provide it via the 'x-api-key' header."
+                missingTemplateName:
+                  summary: Missing Template Name
+                  value:
+                    type: "MissingParameter"
+                    details: "Template name is required. Provide it via the 'templateName' query parameter."
+                invalidFormat:
+                  summary: Invalid Return Format
+                  value:
+                    type: "InvalidParameter"
+                    details: "Invalid return format \"TXT\". Supported formats are: JSON, XML."
         '403':
           description: Forbidden - invalid or inactive API key
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidApiKey:
+                  summary: Invalid API Key
+                  value:
+                    type: "Forbidden"
+                    details: "Invalid API key. The provided API key is not authorized."
+                inactiveApiKey:
+                  summary: Inactive API Key
+                  value:
+                    type: "Forbidden"
+                    details: "API key is inactive. Contact the administrator to reactivate your access."
+        '404':
+          description: Not found - template does not exist or format not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                templateNotFound:
+                  summary: Template Not Found
+                  value:
+                    type: "NotFound"
+                    details: "Template \"unknownTemplate\" does not exist in the database."
+                formatNotAvailable:
+                  summary: Format Not Available
+                  value:
+                    type: "NotFound"
+                    details: "Template \"human\" does not have data in XML format."
+        '405':
+          description: Method not allowed - only GET requests are supported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                type: "MethodNotAllowed"
+                details: "Only GET requests are supported. Use GET with query parameters."
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                type: "InternalServerError"
+                details: "An unexpected error occurred while processing your request. Please try again later."
+
+  /createTemplateRequest:
+    post:
+      tags:
+        - Requests
+      summary: Submit a request for a new RAL template
+      description: |
+        Submit a request for a new RAL template that doesn't currently exist in the system.
+        
+        The request will be reviewed by the Permarobotics team and you will receive a confirmation with a unique request ID.
+        
+        **Required Information**:
+        - Detailed description of the template functionality
+        - Template type or category
+        - Your user ID for tracking and follow-up
+      operationId: createTemplateRequest
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - templateDescription
+                - templateType
+                - requestUserId
+              properties:
+                templateDescription:
+                  type: string
+                  description: Detailed description of the requested template functionality and use case
+                  example: "Need a template for autonomous weeding robots that can identify and remove weeds using computer vision while preserving crops. Should support different crop types and weeding strategies."
+                templateType:
+                  type: string
+                  description: Category or type of the template being requested
+                  example: "WeedingAutomation"
+                requestUserId:
+                  type: string
+                  description: User ID of the person making the request
+                  example: "user_12345_abc"
+            examples:
+              weedingRobot:
+                summary: Request for Weeding Robot Template
+                value:
+                  templateDescription: "Need a template for autonomous weeding robots that can identify and remove weeds using computer vision while preserving crops. Should support different crop types and weeding strategies."
+                  templateType: "WeedingAutomation"
+                  requestUserId: "user_12345_abc"
+              pestMonitoring:
+                summary: Request for Pest Monitoring Template
+                value:
+                  templateDescription: "Template for automated pest detection and monitoring system using image recognition and pheromone traps. Should generate alerts when pest levels exceed thresholds."
+                  templateType: "PestMonitoring"
+                  requestUserId: "user_67890_xyz"
+              soilAnalysis:
+                summary: Request for Soil Analysis Template
+                value:
+                  templateDescription: "Multi-sensor soil analysis template that combines NPK sensors, pH measurement, and organic matter detection. Need integration with lab analysis results."
+                  templateType: "SoilAnalysis"
+                  requestUserId: "user_24680_def"
+      responses:
+        '200':
+          description: Template request submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                    description: Unique ID of the created template request
+                    example: "req_2024_12_01_abc123xyz"
+              examples:
+                successfulRequest:
+                  summary: Successful Request Creation
+                  value:
+                    requestId: "req_2024_12_01_abc123xyz"
+        '400':
+          description: Bad request - missing required field or invalid user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Bad Request"
+                  message:
+                    type: string
+                    example: "Expected field templateDescription in request body missing"
+              examples:
+                missingField:
+                  summary: Missing Required Field
+                  value:
+                    error: "Bad Request"
+                    message: "Expected field templateDescription in request body missing. Body was: {\"templateType\":\"WeedingAutomation\",\"requestUserId\":\"user_123\"}"
+                userNotFound:
+                  summary: User Does Not Exist
+                  value:
+                    error: "Bad Request"
+                    message: "User 'user_invalid_123' not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
       in: header
-      name: X-API-KEY
-      description: API key for authentication
-      
+      name: x-api-key
+      description: API key provided in the x-api-key header
   schemas:
-    SearchResult:
+    
+    ErrorResponse:
       type: object
+      description: Standard error response with structured information
       required:
-        - name
-        - roles
-        - templateId
-        - templateType
-        - relevance
-        - definitionText
+        - type
+        - details
       properties:
-        name:
+        type:
           type: string
-          description: Name of the official template registered at open-ral.io, used as the ralType for corresponding objects or methods. All returned templates are from the official openRAL registry.
-          example: "TemperatureSensor"
-        roles:
-          type: array
-          items:
-            type: string
-          description: List of roles associated with the template
-          example: ["thing"]
-        templateId:
+          description: Error type or category (e.g., NotFound, Forbidden, InvalidParameter)
+          example: "NotFound"
+        details:
           type: string
-          description: Unique identifier of the template
-          example: "b8ee8880-680d-4c1b-a1ac-1dc5d85dfb72"
-        templateType:
-          type: string
-          description: Object or method
-          example: "object"
-          enum: ["object", "method"]
-        relevance:
-          type: number
-          format: float
-          description: Relevance score based on vector distance
-          example: 0.85
-        definitionText:
-          type: string
-          description: Text definition of the template
-          example: "A sensor device that measures ambient temperature"
-          
-    Error:
-      type: object
-      required:
-        - errorMessage
-      properties:
-        errorMessage:
-          type: string
-          description: Human-readable error message
-          example: "The provided API key is invalid or missing"
-
+          description: Detailed description of the error with actionable information
+          example: "Template 'AgriculturalRobotScheduler' does not exist in the database."

@@ -205,6 +205,13 @@
                             "targetRole"
                         ]
                     }
+                },
+                "digitalSignatures": {
+                    "type": "array",
+                    "description": "Optional array of cryptographic signatures that verify the authenticity and integrity of the method. Supports multiple signatures from different parties, each potentially using different algorithms.",
+                    "items": {
+                        "$ref": "#/definitions/_DigitalSignature"
+                    }
                 }
             },
             "required": [
@@ -431,6 +438,13 @@
                     "type": "string",
                     "description": "Defines the time the real object that is represented by the RalObject started to exist",
                     "format": "date-time"
+                },
+                "digitalSignatures": {
+                    "type": "array",
+                    "description": "Optional array of cryptographic signatures that verify the authenticity and integrity of the object. Supports multiple signatures from different parties, each potentially using different algorithms.",
+                    "items": {
+                        "$ref": "#/definitions/_DigitalSignature"
+                    }
                 }
             }
         },
@@ -596,6 +610,46 @@
             },
             "uniqueProperties": [
                 "key"
+            ]
+        },
+        "_DigitalSignature": {
+            "type": "object",
+            "description": "Represents a cryptographic digital signature that verifies the authenticity and integrity of a RalObject or RalMethod. Multiple signatures from different parties are supported.",
+            "properties": {
+                "signature": {
+                    "type": "string",
+                    "description": "Base64-encoded digital signature string",
+                    "pattern": "^[A-Za-z0-9+/=]+$"
+                },
+                "signerUID": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The UID of the signer (references a RalObject, typically of type 'human' or 'organization'). The referenced object should contain the public key needed for signature verification."
+                },
+                "signedContent": {
+                    "type": "array",
+                    "description": "Array of JSON Path expressions specifying which parts of the object/method were signed. Use '$' to sign the entire root object. Examples: '$.inputObjects[0]', '$.methodState'",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^\\$"
+                    },
+                    "minItems": 1
+                },
+                "algorithm": {
+                    "type": "string",
+                    "description": "The cryptographic algorithm used for signing. Defaults to 'Ed25519' if not specified.",
+                    "enum": [
+                        "Ed25519",
+                        "RSA-SHA256",
+                        "ECDSA-P256-SHA256"
+                    ],
+                    "default": "Ed25519"
+                }
+            },
+            "required": [
+                "signature",
+                "signerUID",
+                "signedContent"
             ]
         }
     }

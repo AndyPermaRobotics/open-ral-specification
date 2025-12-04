@@ -97,7 +97,12 @@ def main() -> None:
     Combines predefined files into a single Markdown document.
     """
     # Hardcoded list of files to combine (in order)
-    files_to_combine = ["open_ral.md", "open_ral.schema.json", "openapi.yml"]
+    files_to_combine = [
+        "open_ral.md",
+        "open_ral.schema.json",
+        "openapi_semantic.yml",
+        "openapi.yml",
+    ]
 
     output_file = "open_ral_overview.md"
 

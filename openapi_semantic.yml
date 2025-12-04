@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: openRAL Semantic Search API
+  description: API for semantic search of RAL templates
+  version: 1.0.0
+  
+servers:
+  - url: https://europe-west3-ral1-80620.cloudfunctions.net
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /semantic_search:
+    post:
+      summary: Perform semantic search on RAL templates
+      description: > 
+        Use this endpoint to find the appropriate official RALType when you don't know which template fits your use case.
+        
+        Describe your concept in natural language, and the API will return matching RAL templates ranked by semantic similarity.
+        For example, searching for "a specific area of land designated for the cultivation of crops" will find templates like "field", "plot", or "farmland".
+        
+        Note: If you already know the exact RALType name, you can use it directly without searching.
+        
+        Attention: Semantic similarity does not guarantee semantic equivalence, but rather finds templates that are contextually relevant based on the input description.
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search text for finding templates that match the semantic meaning of the input
+          schema:
+            type: string
+            example: "a specific area of land designated for the cultivation of crops"
+        - name: templateTypes
+          in: query
+          required: false
+          description: Filter by template types (currently not implemented)
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["object", "method"]
+              example: "object"
+      responses:
+        '200':
+          description: Successful search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResult'
+                  example:
+                    name: "field"
+                    roles: ["thing"]
+                    templateId: "flxES9jiumQvMUCze8tE"
+                    templateType: "object"
+                    relevance: 562
+                    definitionText: "In an agricultural context, a 'field' refers to a specific area of land designated for the cultivation of crops or the grazing of livestock. Fields are typically delineated by natural boundaries like hedgerows, fences, or other markers, and they are managed by farmers to optimize the production of agricultural products. The size, shape, and use of a field can vary widely depending on the type of farming, the landscape, and the agricultural practices employed. Fields are fundamental units in farming operations, and they may be used for growing a single crop (monoculture) or multiple crops (polyculture), or for rotational grazing in the case of livestock farming. Soil preparation, irrigation, planting, and harvesting are all activities that take place within these fields."
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - invalid or inactive API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+      description: API key for authentication
+      
+  schemas:
+    SearchResult:
+      type: object
+      required:
+        - name
+        - roles
+        - templateId
+        - templateType
+        - relevance
+        - definitionText
+      properties:
+        name:
+          type: string
+          description: Name of the official template registered at open-ral.io, used as the ralType for corresponding objects or methods. All returned templates are from the official openRAL registry.
+          example: "TemperatureSensor"
+        roles:
+          type: array
+          items:
+            type: string
+          description: List of roles associated with the template
+          example: ["thing"]
+        templateId:
+          type: string
+          description: Unique identifier of the template
+          example: "b8ee8880-680d-4c1b-a1ac-1dc5d85dfb72"
+        templateType:
+          type: string
+          description: Object or method
+          example: "object"
+          enum: ["object", "method"]
+        relevance:
+          type: number
+          format: float
+          description: Relevance score based on vector distance
+          example: 0.85
+        definitionText:
+          type: string
+          description: Text definition of the template
+          example: "A sensor device that measures ambient temperature"
+          
+    Error:
+      type: object
+      required:
+        - errorMessage
+      properties:
+        errorMessage:
+          type: string
+          description: Human-readable error message
+          example: "The provided API key is invalid or missing"
+
